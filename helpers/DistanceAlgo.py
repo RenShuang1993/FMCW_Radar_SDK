@@ -29,22 +29,23 @@
 import numpy as np
 from scipy import signal, constants
 
-from ifxradarsdk.fmcw.types import FmcwSequenceChirp
+
 from helpers.fft_spectrum import *
 
 
 class DistanceAlgo:
     """Algorithm for computation of distance FFT from raw data"""
 
-    def __init__(self, chirp: FmcwSequenceChirp, num_chirps_per_frame: int):
+    def __init__(self, num_samples,end_frequency_Hz,start_frequency_Hz, num_chirps_per_frame: int):
         self.num_chirps_per_frame = num_chirps_per_frame
 
         # compute Blackman-Harris Window matrix over chirp samples(range)
-        self.range_window = signal.blackmanharris(chirp.num_samples).reshape(1, chirp.num_samples)
+        self.range_window = signal.blackmanharris(num_samples).reshape(1, num_samples)
 
-        bandwidth_hz = abs(chirp.end_frequency_Hz - chirp.start_frequency_Hz)
-        fft_size = chirp.num_samples * 2
-        self.range_bin_length = constants.c / (2 * bandwidth_hz * fft_size / chirp.num_samples)
+        bandwidth_hz = abs(end_frequency_Hz - start_frequency_Hz)
+        fft_size = num_samples * 2
+        self.range_bin_length = constants.c / (2 * bandwidth_hz * fft_size / num_samples)
+        self.skip = 10
 
     def compute_distance(self, chirp_data):
         # Computes distance using chirp data
@@ -58,10 +59,11 @@ class DistanceAlgo:
 
         # Step 3 - coherent integration of all chirps
         distance_data = np.divide(range_fft_abs.sum(axis=0), self.num_chirps_per_frame)
-
+        #distance_data  = np.fft.fftshift(distance_data)
+        
         # Step 4 - peak search and distance calculation
-        skip = 8
-        distance_peak = np.argmax(distance_data[skip:])
+    
+        distance_peak = np.argmax(distance_data[self.skip:])
 
-        distance_peak_m = self.range_bin_length * (distance_peak + skip)
-        return distance_peak_m, distance_data
+        distance_peak_m = self.range_bin_length * (distance_peak + self.skip)
+        return distance_peak_m, distance_data,self.range_bin_length,self.skip

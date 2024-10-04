@@ -28,6 +28,7 @@
 
 import numpy as np
 from scipy import signal
+from scipy import constants
 
 from helpers.fft_spectrum import *
 from scipy.ndimage import gaussian_filter
@@ -57,6 +58,10 @@ class DopplerAlgo:
 
         # initialize MTI filter
         self.mti_history = np.zeros((self.num_chirps_per_frame, num_samples, num_ant))
+        bandwidth_hz = abs(63500000000 - 58000000000)
+        fft_size = num_samples * 2
+        self.range_bin_length = constants.c / (2 * bandwidth_hz * fft_size / num_samples)
+
 
     def compute_doppler_map(self, data: np.ndarray, i_ant: int):
         """Compute Range-Doppler map for i-th antennas
@@ -77,6 +82,7 @@ class DopplerAlgo:
         fft1d = fft_spectrum(data_mti, self.range_window)
 
         # prepare for doppler FFT
+        
 
         # Transpose
         # Distance is now indicated on y axis
@@ -87,7 +93,7 @@ class DopplerAlgo:
 
         zp2 = np.pad(fft1d, ((0, 0), (0, self.num_chirps_per_frame)), "constant")
         fft2d = np.fft.fft(zp2) / self.num_chirps_per_frame
-      
+
         # re-arrange fft result for zero speed at centre
         return np.fft.fftshift(fft2d, (1,))
         """

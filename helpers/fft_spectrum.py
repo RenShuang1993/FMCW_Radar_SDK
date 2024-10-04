@@ -46,7 +46,6 @@ def fft_spectrum(mat, range_window):
     # helpful in zero padding for high resolution FFT.
     # compute row (chirp) averages
     avgs = np.average(mat, 1).reshape(num_chirps, 1)
-
     # de-bias values
     mat = mat - avgs
     # -------------------------------------------------
